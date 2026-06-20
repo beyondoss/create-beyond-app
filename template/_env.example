@@ -1,0 +1,21 @@
+# Beyond injects all of these automatically in `beyond dev` and in production.
+# This file documents them for reference and for running outside the Beyond CLI.
+
+# Postgres (via PgBouncer). The migration runner and Drizzle client both use this.
+DATABASE_URL=postgres://postgres@db.internal:5432/postgres
+
+# Auth (beyond-auth service)
+BEYOND_AUTH_URL=http://auth.internal:8080
+# Only needed for admin/ReBAC calls (auth.admin / auth.authz). Leave unset otherwise.
+# BEYOND_AUTH_ADMIN_SECRET=
+
+# KV
+BEYOND_KV_URL=redis://kv.internal:6379
+
+# Queue
+BEYOND_QUEUE_URL=http://queue.internal:8080
+# BEYOND_QUEUE_TOKEN=anon
+
+# Objects (S3-compatible)
+BEYOND_OBJECTS_URL=http://objects.internal:9000
+BEYOND_OBJECTS_ROOT_TOKEN=changeme

@@ -1,0 +1,25 @@
+{
+  "name": "create-beyond-app",
+  "version": "0.1.0",
+  "description": "Scaffold a primitive-aware full-stack Beyond app — TanStack Start + Drizzle, wired to Beyond Postgres, Auth, KV, Queue, and Objects.",
+  "type": "module",
+  "bin": {
+    "create-beyond-app": "bin/index.js"
+  },
+  "files": [
+    "bin",
+    "template"
+  ],
+  "engines": {
+    "node": ">=20"
+  },
+  "keywords": [
+    "beyond",
+    "create-beyond-app",
+    "tanstack-start",
+    "drizzle",
+    "full-stack",
+    "starter"
+  ],
+  "license": "MIT"
+}
