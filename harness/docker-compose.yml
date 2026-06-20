@@ -1,0 +1,99 @@
+# Beyond primitive stack for local + CI e2e (offline from Beyond's servers).
+# Images are built by `bin/dev-stack up` from JIT-cloned source, then run here.
+name: beyond-stack
+
+services:
+  postgres:
+    image: beyond-local/postgres:dev
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: app
+    ports: ["5432:5432"]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d app"]
+      interval: 2s
+      timeout: 3s
+      retries: 40
+
+  auth:
+    image: beyond-local/auth:dev
+    restart: unless-stopped
+    depends_on:
+      postgres: { condition: service_healthy }
+    environment:
+      DATABASE_URL: "postgres://postgres:postgres@postgres:5432/app?options=-csearch_path%3Dauth%2Cpublic"
+      ADDRESS: "0.0.0.0:8080"
+      # 32 zero bytes, base64url (test key — mirrors the auth SDK harness)
+      SIGNING_KEY_ENCRYPTION_KEY: "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"
+      ADMIN_SECRET: "test-admin-secret"
+      WEBAUTHN_RP_ID: "localhost"
+      WEBAUTHN_RP_ORIGIN: "http://localhost:8080"
+      PUBLIC_URL: "http://localhost:8080"
+      LOG_LEVEL: "info"
+      BEYOND_DATA_DIR: "/tmp/beyond-auth"
+    ports: ["8080:8080"]
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://localhost:8080/readyz"]
+      interval: 2s
+      timeout: 3s
+      retries: 60
+
+  kv:
+    image: beyond-local/kv:dev
+    restart: unless-stopped
+    environment:
+      KV_DATA_DIR: "/data"
+      KV_ADDRESS: "0.0.0.0:4869"
+      KV_RESP_PORT: "6379"
+      KV_MEMORY_BYTES: "67108864"
+      KV_THREADS: "1"
+      KV_HANDOFF_SOCKET_PATH: "/tmp/kv-handoff.sock"
+      RUST_LOG: "info"
+    ports: ["6379:6379", "4869:4869"]
+    tmpfs: ["/data"]
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://localhost:4869/livez"]
+      interval: 2s
+      timeout: 3s
+      retries: 40
+
+  queue:
+    image: beyond-local/queue:dev
+    restart: unless-stopped
+    depends_on:
+      postgres: { condition: service_healthy }
+    environment:
+      DATABASE_URL: "postgres://postgres:postgres@postgres:5432/app"
+      QUEUE_ADDRESS: "0.0.0.0:4566"
+      QUEUE_HANDOFF_STATE_DIR: "/tmp/queue"
+      QUEUE_HANDOFF_SOCKET_PATH: "/tmp/queue/control.sock"
+      RUST_LOG: "info"
+    ports: ["4566:4566"]
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://localhost:4566/livez"]
+      interval: 2s
+      timeout: 3s
+      retries: 60
+
+  objects:
+    image: beyond-local/objects:dev
+    restart: unless-stopped
+    environment:
+      OBJECTS_ROOT_TOKEN: "local-root-token"
+      OBJECTS_DATA_DIR: "/data"
+      OBJECTS_INDEX_DIR: "/data/.index"
+      OBJECTS_HANDOFF_SOCKET_PATH: "/tmp/objects-handoff.sock"
+      ADDRESS: "0.0.0.0:9000"
+      METRICS_ADDRESS: "0.0.0.0:9001"
+      OBJECTS_URL: "http://localhost:9000"
+      LOG_LEVEL: "info"
+      RUST_LOG: "info"
+    ports: ["9000:9000"]
+    tmpfs: ["/data"]
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://localhost:9000/livez"]
+      interval: 2s
+      timeout: 3s
+      retries: 40

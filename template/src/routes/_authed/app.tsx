@@ -1,5 +1,5 @@
 import { createFileRoute, useRouter } from "@tanstack/react-router";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -18,6 +18,15 @@ function Dashboard() {
   const router = useRouter();
   const [error, setError] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
+
+  // Notes are processed asynchronously by the queue worker. While any note is
+  // still pending, refetch the loader so the status flips to "processed" live.
+  const hasPending = notes.some((n) => n.status === "pending");
+  useEffect(() => {
+    if (!hasPending) return;
+    const id = setInterval(() => router.invalidate(), 1500);
+    return () => clearInterval(id);
+  }, [hasPending, router]);
 
   async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();

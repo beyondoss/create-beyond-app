@@ -1,0 +1,38 @@
+# syntax=docker/dockerfile:1
+# Postgres 18 with the beyond_auth pgrx extension installed (so auth's
+# `CREATE EXTENSION beyond_auth` migration succeeds) and the queue schema +
+# PL/pgSQL hot paths available for init.
+#
+# Build with additional contexts:
+#   docker build -f harness/Dockerfile.postgres \
+#     --build-context queue=<queue repo> --build-context harness=harness \
+#     -t beyond-local/postgres <auth repo>
+# (primary context = the auth repo)
+
+FROM postgres:18-bookworm AS extbuilder
+RUN apt-get update && apt-get install -y --no-install-recommends \
+      curl build-essential clang libclang-dev pkg-config libssl-dev \
+      postgresql-server-dev-18 ca-certificates git \
+    && rm -rf /var/lib/apt/lists/*
+RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs \
+      | sh -s -- -y --default-toolchain 1.92 --profile minimal
+ENV PATH="/root/.cargo/bin:${PATH}"
+# cargo-pgrx must match the extension's pgrx dependency (=0.18.0).
+RUN cargo install cargo-pgrx --version 0.18.0 --locked
+# Register pg18 (system install) so PGRX_HOME exists; no postgres is downloaded.
+RUN cargo pgrx init --pg18 /usr/bin/pg_config
+# Primary build context is the auth repo.
+COPY . /src/auth
+WORKDIR /src/auth/beyond-auth-extension
+# Installs control + SQL + .so into this image's postgres dirs.
+RUN cargo pgrx install --features pg18 --no-default-features --pg-config /usr/bin/pg_config
+
+FROM postgres:18-bookworm
+# beyond_auth extension artifacts (control, --version.sql, .so)
+COPY --from=extbuilder /usr/share/postgresql/18/extension/beyond_auth* /usr/share/postgresql/18/extension/
+COPY --from=extbuilder /usr/lib/postgresql/18/lib/beyond_auth.so /usr/lib/postgresql/18/lib/
+# queue schema + PL/pgSQL hot paths (from the queue repo build context)
+COPY --from=queue beyond-queue-extension/sql/schema.sql /opt/queue/schema.sql
+COPY --from=queue tests/fixtures/hot_paths.sql /opt/queue/hot_paths.sql
+# init script (from the harness build context)
+COPY --from=harness initdb.sh /docker-entrypoint-initdb.d/10-beyond-init.sh

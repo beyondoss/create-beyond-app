@@ -7,11 +7,17 @@
     "create-beyond-app": "bin/index.js"
   },
   "files": [
-    "bin",
+    "bin/index.js",
     "template"
   ],
   "engines": {
     "node": ">=20"
+  },
+  "scripts": {
+    "e2e": "node bin/dev-stack.mjs up && node e2e/prepare-app.mjs && playwright test -c e2e/playwright.config.ts",
+    "e2e:up": "node bin/dev-stack.mjs up",
+    "e2e:down": "node bin/dev-stack.mjs down",
+    "e2e:report": "playwright show-report"
   },
   "keywords": [
     "beyond",
@@ -21,5 +27,8 @@
     "full-stack",
     "starter"
   ],
-  "license": "MIT"
+  "license": "MIT",
+  "devDependencies": {
+    "@playwright/test": "^1.50.0"
+  }
 }
