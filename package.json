@@ -14,6 +14,8 @@
     "node": ">=20"
   },
   "scripts": {
+    "dev:local": "node scripts/dev-local.mjs",
+    "shot": "node e2e/shot.mjs",
     "e2e": "node bin/dev-stack.mjs up && node e2e/prepare-app.mjs && playwright test -c e2e/playwright.config.ts",
     "e2e:up": "node bin/dev-stack.mjs up",
     "e2e:down": "node bin/dev-stack.mjs down",
