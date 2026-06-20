@@ -1,7 +1,7 @@
 # syntax=docker/dockerfile:1
 # Generic builder for a Beyond primitive server. Context = a cloned primitive
 # repo; BIN selects which binary to build (beyond-auth/kv/queue/objects).
-# Debug build (no --release) — much faster to compile, fine for a test harness.
+# Release build — representative of production + small stripped binaries.
 ARG RUST_VERSION=1.92
 
 FROM rust:${RUST_VERSION}-bookworm AS builder
@@ -15,8 +15,9 @@ COPY . .
 # the cache mount in the same RUN (cache mounts aren't part of the image).
 RUN --mount=type=cache,target=/usr/local/cargo/registry \
     --mount=type=cache,target=/src/target,sharing=locked \
-    cargo build --bin "${BIN}" \
-    && cp "/src/target/debug/${BIN}" "/usr/local/bin/beyond-server"
+    cargo build --release --bin "${BIN}" \
+    && cp "/src/target/release/${BIN}" "/usr/local/bin/beyond-server" \
+    && strip "/usr/local/bin/beyond-server"
 
 FROM debian:bookworm-slim AS runtime
 RUN apt-get update && apt-get install -y --no-install-recommends \

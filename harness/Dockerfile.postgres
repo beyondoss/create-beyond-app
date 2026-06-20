@@ -25,7 +25,7 @@ RUN cargo pgrx init --pg18 /usr/bin/pg_config
 COPY . /src/auth
 WORKDIR /src/auth/beyond-auth-extension
 # Installs control + SQL + .so into this image's postgres dirs.
-RUN cargo pgrx install --features pg18 --no-default-features --pg-config /usr/bin/pg_config
+RUN cargo pgrx install --release --features pg18 --no-default-features --pg-config /usr/bin/pg_config
 
 FROM postgres:18-bookworm
 # beyond_auth extension artifacts (control, --version.sql, .so)
