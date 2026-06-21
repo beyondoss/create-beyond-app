@@ -75,7 +75,7 @@ export const createNote = createServerFn({ method: "POST" })
       })
       .returning();
 
-    await queue.queues.create(NOTE_QUEUE).catch(() => {});
+    // The queue is created once by the worker at boot — just enqueue here.
     await queue.messages.send(NOTE_QUEUE, { noteId: note.id });
 
     // Invalidate the cached count so the dashboard reflects the new note.

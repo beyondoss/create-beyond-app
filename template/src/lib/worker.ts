@@ -25,10 +25,13 @@ async function loop(): Promise<void> {
 
   for (;;) {
     try {
-      // Long-poll for up to 20s; visibility timeout hides claimed messages.
+      // Push-based wakeup: the server parks this request on a WaitLatch and a
+      // committing `send` signals it, so the worker sleeps until a job arrives
+      // (returning after `wait`s at most). `visibilityTimeout` hides a claimed
+      // message from other workers until it's deleted.
       const { data, error } = await queue.messages.receive(NOTE_QUEUE, {
         max: 10,
-        wait: 20,
+        wait: 5,
         visibilityTimeout: 30,
       });
       if (error || !data || data.length === 0) {
