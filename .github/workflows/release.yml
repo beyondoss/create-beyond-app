@@ -1,0 +1,24 @@
+name: Release
+on:
+  push:
+    tags:
+      - v*
+permissions:
+  contents: read
+  id-token: write # OIDC trusted publishing
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          registry-url: "https://registry.npmjs.org"
+      - name: Set version from tag
+        run: npm version "${GITHUB_REF_NAME#v}" --no-git-tag-version --allow-same-version
+      - name: Upgrade npm
+        # OIDC trusted publishing requires npm >= 11.5.1; Node 22 ships npm 10.
+        run: npm install -g npm@latest
+      - name: Publish
+        run: npm publish --access public
