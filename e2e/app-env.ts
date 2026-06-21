@@ -1,6 +1,6 @@
-// Env that points the scaffolded app at the local primitive stack
-// (mirrors bin/dev-stack.mjs APP_ENV). Used by global-setup (writes .env) and
-// playwright.config (injects into the dev server).
+// Env that points the scaffolded app at the e2e primitive stack
+// (harness/docker-compose.yml), injected into the app's dev server by
+// playwright.config.
 export const APP_ENV: Record<string, string> = {
   DATABASE_URL: "postgres://postgres:postgres@localhost:5432/app",
   BEYOND_AUTH_URL: "http://localhost:8080",

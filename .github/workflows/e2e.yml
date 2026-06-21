@@ -28,8 +28,9 @@ jobs:
       - name: Install Playwright (chromium)
         run: pnpm exec playwright install --with-deps chromium
 
-      # Scaffolds the app; Playwright's webServer runs its `pnpm dev`, which pulls
-      # the published ghcr.io/beyondoss/beyond-* images (no build from source).
+      # `pnpm e2e` pulls + starts the published primitive images
+      # (harness/docker-compose.yml), scaffolds the app, and runs Playwright
+      # against the app's `pnpm dev`. No building primitives from source.
       - name: Run e2e
         run: pnpm e2e
 

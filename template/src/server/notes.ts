@@ -6,8 +6,8 @@ import { notes, type Note } from "../db/schema";
 import { getCurrentUser } from "../lib/auth.server";
 import { kv } from "../lib/kv.server";
 import { queue, NOTE_QUEUE } from "../lib/queue.server";
+import { noteLimiter } from "../lib/rate-limit.server";
 
-const RATE_LIMIT = 10; // notes created per minute, per user
 const COUNT_TTL = 30; // seconds to cache the dashboard note count
 
 async function requireUser() {
@@ -52,11 +52,9 @@ export const createNote = createServerFn({ method: "POST" })
   .handler(async ({ data }): Promise<{ ok: true; note: Note } | { ok: false; error: string }> => {
     const user = await requireUser();
 
-    // KV rate limit: a per-user, per-minute counter with a short TTL.
-    const rlKey = `notes:rl:${user.userId}`;
-    await kv.set(rlKey, "0", { ttl: 60, ifAbsent: true });
-    const { data: hits } = await kv.incr(rlKey);
-    if (typeof hits === "number" && hits > RATE_LIMIT) {
+    // Per-user rate limit via @beyond.dev/rate-limit (sliding window over KV).
+    const { data: rl } = await noteLimiter.limit(`notes:create:${user.userId}`);
+    if (rl && !rl.allowed) {
       return { ok: false, error: "Rate limit reached — slow down a moment." };
     }
 
