@@ -5,7 +5,10 @@
   "type": "module",
   "packageManager": "pnpm@10.34.4",
   "scripts": {
-    "dev": "pnpm db:migrate && vite dev",
+    "dev": "node scripts/dev.mjs",
+    "dev:app": "vite dev",
+    "stack:up": "docker compose up -d --wait",
+    "stack:down": "docker compose down",
     "build": "pnpm db:migrate && vite build",
     "start": "node server.mjs",
     "db:generate": "drizzle-kit generate",

@@ -1,0 +1,109 @@
+# Local Beyond stack — the five primitives your app talks to, pulled as prebuilt
+# images (no build). `pnpm dev` brings this up, waits for health, migrates, and
+# starts the app. Works with any container runtime: Docker, OrbStack, Podman, Colima.
+#
+# These are pinned, known-good versions. Bump them as the primitives release.
+name: beyond
+
+services:
+  postgres:
+    image: ghcr.io/beyondoss/beyond-postgres:0.1.0
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: app
+    ports: ["5432:5432"]
+    # postgres:18+ stores data under /var/lib/postgresql/18/docker and declares
+    # /var/lib/postgresql as the volume mount point.
+    volumes: ["pgdata:/var/lib/postgresql"]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d app"]
+      interval: 2s
+      timeout: 3s
+      retries: 40
+
+  auth:
+    image: ghcr.io/beyondoss/beyond-auth:0.1.5
+    restart: unless-stopped
+    depends_on:
+      postgres: { condition: service_healthy }
+    environment:
+      DATABASE_URL: "postgres://postgres:postgres@postgres:5432/app?options=-csearch_path%3Dauth%2Cpublic"
+      ADDRESS: "0.0.0.0:8080"
+      # Local-dev test key (32 zero bytes, base64url). Do not use in production.
+      SIGNING_KEY_ENCRYPTION_KEY: "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"
+      ADMIN_SECRET: "test-admin-secret"
+      WEBAUTHN_RP_ID: "localhost"
+      WEBAUTHN_RP_ORIGIN: "http://localhost:8080"
+      PUBLIC_URL: "http://localhost:8080"
+      LOG_LEVEL: "info"
+      BEYOND_DATA_DIR: "/tmp/beyond-auth"
+    ports: ["8080:8080"]
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://localhost:8080/readyz"]
+      interval: 2s
+      timeout: 3s
+      retries: 60
+
+  kv:
+    image: ghcr.io/beyondoss/beyond-kv:0.1.0
+    restart: unless-stopped
+    environment:
+      KV_DATA_DIR: "/data"
+      KV_ADDRESS: "0.0.0.0:4869"
+      KV_RESP_PORT: "6379"
+      KV_MEMORY_BYTES: "67108864"
+      KV_THREADS: "1"
+      KV_HANDOFF_SOCKET_PATH: "/tmp/kv-handoff.sock"
+      RUST_LOG: "info"
+    ports: ["6379:6379", "4869:4869"]
+    tmpfs: ["/data"]
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://localhost:4869/livez"]
+      interval: 2s
+      timeout: 3s
+      retries: 40
+
+  queue:
+    image: ghcr.io/beyondoss/beyond-queue:0.1.1
+    restart: unless-stopped
+    depends_on:
+      postgres: { condition: service_healthy }
+    environment:
+      DATABASE_URL: "postgres://postgres:postgres@postgres:5432/app"
+      QUEUE_ADDRESS: "0.0.0.0:4566"
+      QUEUE_HANDOFF_STATE_DIR: "/tmp/queue"
+      QUEUE_HANDOFF_SOCKET_PATH: "/tmp/queue/control.sock"
+      RUST_LOG: "info"
+    ports: ["4566:4566"]
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://localhost:4566/livez"]
+      interval: 2s
+      timeout: 3s
+      retries: 60
+
+  objects:
+    image: ghcr.io/beyondoss/beyond-objects:0.1.0
+    restart: unless-stopped
+    environment:
+      OBJECTS_ROOT_TOKEN: "local-root-token"
+      OBJECTS_DATA_DIR: "/data"
+      OBJECTS_INDEX_DIR: "/data/.index"
+      OBJECTS_HANDOFF_SOCKET_PATH: "/tmp/objects-handoff.sock"
+      ADDRESS: "0.0.0.0:9000"
+      METRICS_ADDRESS: "0.0.0.0:9001"
+      OBJECTS_URL: "http://localhost:9000"
+      LOG_LEVEL: "info"
+      RUST_LOG: "info"
+    ports: ["9000:9000"]
+    volumes: ["objdata:/data"]
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://localhost:9000/livez"]
+      interval: 2s
+      timeout: 3s
+      retries: 40
+
+volumes:
+  pgdata:
+  objdata:
