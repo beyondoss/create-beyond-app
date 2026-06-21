@@ -14,10 +14,10 @@
     "node": ">=20"
   },
   "scripts": {
-    "dev:local": "node scripts/dev-local.mjs",
     "shot": "node e2e/shot.mjs",
-    "e2e": "node e2e/prepare-app.mjs && playwright test -c e2e/playwright.config.ts",
-    "e2e:down": "pnpm -C .beyond-stack/app stack:down",
+    "e2e": "docker compose -f harness/docker-compose.yml up -d --wait && node e2e/prepare-app.mjs && playwright test -c e2e/playwright.config.ts",
+    "e2e:up": "docker compose -f harness/docker-compose.yml up -d --wait",
+    "e2e:down": "docker compose -f harness/docker-compose.yml down -v",
     "e2e:report": "playwright show-report"
   },
   "keywords": [

@@ -1,5 +1,6 @@
 import { defineConfig } from "@playwright/test";
 import { resolve } from "node:path";
+import { APP_ENV } from "./app-env";
 
 const appDir = resolve(import.meta.dirname, "..", ".beyond-stack", "app");
 
@@ -15,16 +16,15 @@ export default defineConfig({
     trace: "on-first-retry",
   },
   webServer: {
-    // The generated app's own `pnpm dev`: docker compose up (pulls the published
-    // ghcr.io/beyondoss/beyond-* images) + drizzle migrate + vite. This exercises
-    // exactly what an end user gets — no building primitives from source.
+    // The scaffolded app's own `pnpm dev` (drizzle migrate + vite), pointed at the
+    // primitive stack that `pnpm e2e` brought up (harness/docker-compose.yml).
     command: "pnpm dev",
     cwd: appDir,
     url: "http://localhost:5173",
-    // Generous: first run pulls 5 images before the app comes up.
-    timeout: 600_000,
+    timeout: 180_000,
     reuseExistingServer: !process.env.CI,
     stdout: "pipe",
     stderr: "pipe",
+    env: { ...process.env, ...APP_ENV },
   },
 });
