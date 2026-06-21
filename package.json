@@ -6,6 +6,12 @@
   "bin": {
     "create-beyond-app": "bin/index.js"
   },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/beyondoss/create-beyond-app.git"
+  },
+  "homepage": "https://github.com/beyondoss/create-beyond-app#readme",
+  "bugs": "https://github.com/beyondoss/create-beyond-app/issues",
   "files": [
     "bin/index.js",
     "template"
