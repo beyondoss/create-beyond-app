@@ -49,9 +49,7 @@ All singletons are pre-imported and env-configured. Import them from the
 Email/password (plus OAuth, magic links, passkeys, TOTP step-up via `auth.flow.*`).
 - `auth.flow.signUp({ email, password })`, `auth.flow.signIn({ grantType: "password", email, password })`, `auth.flow.signOut(token)`.
 - Per-request user: `createAuthClient({ token }).me.get()` / `.me.update({ imageUrl })`.
-- This app keeps its own httpOnly `beyond_session` cookie (see `auth.server.ts`)
-  because the SDK's `__Host-` cookie needs HTTPS (breaks localhost). Use
-  `getCurrentUser()` to resolve the session; `setSessionCookie` / `clearSessionCookie` to manage it.
+- Session cookie via the SDK's `sessionCookieAttrs` / `clearCookieAttrs` / `getSessionToken` (see `auth.server.ts`): `__Host-`/`Secure` in prod, a plain `session` cookie for local http. `getCurrentUser()` resolves it.
 
 ### Postgres — Drizzle ORM (`src/db`)
 - Define tables in `src/db/schema.ts`; query with `db` from `src/db`.

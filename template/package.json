@@ -13,7 +13,7 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@beyond.dev/auth": "^0.1.1",
+    "@beyond.dev/auth": "^0.1.2",
     "@beyond.dev/kv": "^0.1.0",
     "@beyond.dev/objects": "^0.1.0",
     "@beyond.dev/queue": "^0.1.0",
