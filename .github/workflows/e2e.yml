@@ -9,7 +9,7 @@ on:
 jobs:
   e2e:
     runs-on: ubuntu-latest
-    timeout-minutes: 90
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@v7
 
@@ -28,13 +28,8 @@ jobs:
       - name: Install Playwright (chromium)
         run: pnpm exec playwright install --with-deps chromium
 
-      # Cache the JIT-cloned primitive repos to speed up reruns.
-      - name: Cache primitive repos
-        uses: actions/cache@v4
-        with:
-          path: .beyond-stack/repos
-          key: beyond-repos-${{ hashFiles('harness/versions.env') }}
-
+      # Scaffolds the app; Playwright's webServer runs its `pnpm dev`, which pulls
+      # the published ghcr.io/beyondoss/beyond-* images (no build from source).
       - name: Run e2e
         run: pnpm e2e
 
