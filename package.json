@@ -1,6 +1,6 @@
 {
   "name": "create-beyond-app",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "Scaffold a primitive-aware full-stack Beyond app — TanStack Start + Drizzle, wired to Beyond Postgres, Auth, KV, Queue, and Objects.",
   "type": "module",
   "bin": {
